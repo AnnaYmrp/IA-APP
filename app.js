@@ -768,6 +768,236 @@ function adjustTime(minutes) {
 // 7. RENDERIZADO DE VISTAS Y COMPONENTES
 // ==========================================
 
+// ==========================================
+// 7. SISTEMA DE COLORES E IDENTIFICACIÓN VISUAL
+// ==========================================
+// Asigna colores e iconos exclusivos para cada tipo de acción / fármaco
+function getActionVisualTheme(category = '', title = '') {
+  const combined = (title + ' ' + category).toUpperCase();
+
+  // 1. ADRENALINA (Epinefrina) -> Cyan / Turquesa Eléctrico
+  if (combined.includes('ADRENALINA') || combined.includes('EPINEFRINA')) {
+    return {
+      categoryLabel: 'ADRENALINA',
+      colorClass: 'text-cyan-400',
+      timeClass: 'text-cyan-300 font-black',
+      titleClass: 'text-cyan-200 font-bold',
+      bgClass: 'bg-cyan-950/40 hover:bg-cyan-950/60',
+      borderClass: 'border-l-cyan-400',
+      badgeClass: 'bg-cyan-950 text-cyan-300 border border-cyan-500/50',
+      icon: 'medication'
+    };
+  }
+
+  // 2. DESFIBRILACIÓN / CHOQUES -> Rojo Brillante / Eléctrico
+  if (combined.includes('DESFIBRILACIÓN') || combined.includes('DESCARGA') || combined.includes('CHOQUE')) {
+    return {
+      categoryLabel: 'DESFIBRILACIÓN',
+      colorClass: 'text-red-400',
+      timeClass: 'text-red-400 font-black',
+      titleClass: 'text-red-200 font-bold',
+      bgClass: 'bg-red-950/40 hover:bg-red-950/60',
+      borderClass: 'border-l-red-500',
+      badgeClass: 'bg-red-950 text-red-300 border border-red-500/50',
+      icon: 'bolt'
+    };
+  }
+
+  // 3. CICLO DE RCP / MASAJE CARDÍACO -> Ámbar / Dorado
+  if (combined.includes('CICLO') || combined.includes('COMPRESIÓN') || combined.includes('MASAJE')) {
+    return {
+      categoryLabel: 'CICLO RCP',
+      colorClass: 'text-amber-400',
+      timeClass: 'text-amber-300 font-black',
+      titleClass: 'text-amber-200 font-bold',
+      bgClass: 'bg-amber-950/40 hover:bg-amber-950/60',
+      borderClass: 'border-l-amber-400',
+      badgeClass: 'bg-amber-950 text-amber-300 border border-amber-500/50',
+      icon: 'timer'
+    };
+  }
+
+  // 4. EVALUACIÓN DE RITMO / RELEVO / ASISTOLIA / FV -> Morado / Púrpura
+  if (combined.includes('RITMO') || combined.includes('ASISTOLIA') || combined.includes('FV') || combined.includes('TVSP') || combined.includes('AESP') || combined.includes('RELEVO')) {
+    return {
+      categoryLabel: 'RITMO & RELEVO',
+      colorClass: 'text-purple-400',
+      timeClass: 'text-purple-300 font-black',
+      titleClass: 'text-purple-200 font-bold',
+      bgClass: 'bg-purple-950/40 hover:bg-purple-950/60',
+      borderClass: 'border-l-purple-400',
+      badgeClass: 'bg-purple-950 text-purple-300 border border-purple-500/50',
+      icon: 'ecg_heart'
+    };
+  }
+
+  // 5. AMIODARONA -> Azul Índigo Real
+  if (combined.includes('AMIODARONA')) {
+    return {
+      categoryLabel: 'AMIODARONA',
+      colorClass: 'text-indigo-400',
+      timeClass: 'text-indigo-300 font-black',
+      titleClass: 'text-indigo-200 font-bold',
+      bgClass: 'bg-indigo-950/40 hover:bg-indigo-950/60',
+      borderClass: 'border-l-indigo-400',
+      badgeClass: 'bg-indigo-950 text-indigo-300 border border-indigo-500/50',
+      icon: 'vaccines'
+    };
+  }
+
+  // 6. LIDOCAÍNA -> Verde Azulado / Teal
+  if (combined.includes('LIDOCAÍNA')) {
+    return {
+      categoryLabel: 'LIDOCAÍNA',
+      colorClass: 'text-teal-400',
+      timeClass: 'text-teal-300 font-black',
+      titleClass: 'text-teal-200 font-bold',
+      bgClass: 'bg-teal-950/40 hover:bg-teal-950/60',
+      borderClass: 'border-l-teal-400',
+      badgeClass: 'bg-teal-950 text-teal-300 border border-teal-500/50',
+      icon: 'vaccines'
+    };
+  }
+
+  // 7. SULFATO DE MAGNESIO -> Verde Esmeralda
+  if (combined.includes('MAGNESIO')) {
+    return {
+      categoryLabel: 'MAGNESIO',
+      colorClass: 'text-emerald-400',
+      timeClass: 'text-emerald-300 font-black',
+      titleClass: 'text-emerald-200 font-bold',
+      bgClass: 'bg-emerald-950/40 hover:bg-emerald-950/60',
+      borderClass: 'border-l-emerald-400',
+      badgeClass: 'bg-emerald-950 text-emerald-300 border border-emerald-500/50',
+      icon: 'science'
+    };
+  }
+
+  // 8. BICARBONATO DE SODIO -> Rosa / Magenta
+  if (combined.includes('BICARBONATO')) {
+    return {
+      categoryLabel: 'BICARBONATO',
+      colorClass: 'text-rose-400',
+      timeClass: 'text-rose-300 font-black',
+      titleClass: 'text-rose-200 font-bold',
+      bgClass: 'bg-rose-950/40 hover:bg-rose-950/60',
+      borderClass: 'border-l-rose-400',
+      badgeClass: 'bg-rose-950 text-rose-300 border border-rose-500/50',
+      icon: 'water_drop'
+    };
+  }
+
+  // 9. GLUCONATO DE CALCIO -> Verde Lima
+  if (combined.includes('CALCIO')) {
+    return {
+      categoryLabel: 'CALCIO',
+      colorClass: 'text-lime-400',
+      timeClass: 'text-lime-300 font-black',
+      titleClass: 'text-lime-200 font-bold',
+      bgClass: 'bg-lime-950/40 hover:bg-lime-950/60',
+      borderClass: 'border-l-lime-400',
+      badgeClass: 'bg-lime-950 text-lime-300 border border-lime-500/50',
+      icon: 'healing'
+    };
+  }
+
+  // 10. DEXTROSA -> Naranja Cálido
+  if (combined.includes('DEXTROSA')) {
+    return {
+      categoryLabel: 'DEXTROSA',
+      colorClass: 'text-orange-400',
+      timeClass: 'text-orange-300 font-black',
+      titleClass: 'text-orange-200 font-bold',
+      bgClass: 'bg-orange-950/40 hover:bg-orange-950/60',
+      borderClass: 'border-l-orange-400',
+      badgeClass: 'bg-orange-950 text-orange-300 border border-orange-500/50',
+      icon: 'bloodtype'
+    };
+  }
+
+  // 11. VÍA AÉREA (TET) -> Azul Cielo (Sky)
+  if (combined.includes('VÍA AÉREA') || combined.includes('TET')) {
+    return {
+      categoryLabel: 'VÍA AÉREA',
+      colorClass: 'text-sky-400',
+      timeClass: 'text-sky-300 font-black',
+      titleClass: 'text-sky-200 font-bold',
+      bgClass: 'bg-sky-950/40 hover:bg-sky-950/60',
+      borderClass: 'border-l-sky-400',
+      badgeClass: 'bg-sky-950 text-sky-300 border border-sky-500/50',
+      icon: 'air'
+    };
+  }
+
+  // 12. ACCESO VASCULAR -> Naranja Fuerte
+  if (combined.includes('ACCESO') || combined.includes('VENOSO') || combined.includes('INTRAÓSEO') || combined.includes('IO')) {
+    return {
+      categoryLabel: 'ACCESO VASCULAR',
+      colorClass: 'text-orange-400',
+      timeClass: 'text-orange-300 font-black',
+      titleClass: 'text-orange-200 font-bold',
+      bgClass: 'bg-orange-950/40 hover:bg-orange-950/60',
+      borderClass: 'border-l-orange-400',
+      badgeClass: 'bg-orange-950 text-orange-300 border border-orange-500/50',
+      icon: 'colorize'
+    };
+  }
+
+  // 13. INICIO DE CÓDIGO -> Azul Eléctrico
+  if (combined.includes('INICIO') || combined.includes('CÓDIGO AZUL')) {
+    return {
+      categoryLabel: 'CÓDIGO AZUL',
+      colorClass: 'text-blue-400',
+      timeClass: 'text-blue-300 font-black',
+      titleClass: 'text-blue-200 font-bold',
+      bgClass: 'bg-blue-950/40 hover:bg-blue-950/60',
+      borderClass: 'border-l-blue-400',
+      badgeClass: 'bg-blue-950 text-blue-300 border border-blue-500/50',
+      icon: 'emergency'
+    };
+  }
+
+  // 14. RESOLUCIÓN: RCE (ROSC) -> Verde Éxito
+  if (combined.includes('RCE') || combined.includes('ROSC')) {
+    return {
+      categoryLabel: 'RCE / ROSC',
+      colorClass: 'text-emerald-400',
+      timeClass: 'text-emerald-300 font-black',
+      titleClass: 'text-emerald-200 font-bold',
+      bgClass: 'bg-emerald-950/50 hover:bg-emerald-950/70',
+      borderClass: 'border-l-emerald-400',
+      badgeClass: 'bg-emerald-950 text-emerald-300 border border-emerald-500/50',
+      icon: 'check_circle'
+    };
+  }
+
+  // 15. RESOLUCIÓN: CESE -> Gris Neutro
+  if (combined.includes('CESE')) {
+    return {
+      categoryLabel: 'CESE MANIOBRAS',
+      colorClass: 'text-gray-400',
+      timeClass: 'text-gray-300 font-black',
+      titleClass: 'text-gray-200 font-bold',
+      bgClass: 'bg-gray-900/50 hover:bg-gray-900/70',
+      borderClass: 'border-l-gray-500',
+      badgeClass: 'bg-gray-900 text-gray-300 border border-gray-600',
+      icon: 'stop_circle'
+    };
+  }
+
+  // Predeterminado: Nota clínica
+  return {
+    categoryLabel: category || 'NOTA',
+    colorClass: 'text-slate-300',
+    timeClass: 'text-slate-300 font-bold',
+    titleClass: 'text-on-surface font-semibold',
+    bgClass: 'bg-surface-container hover:bg-surface-container-high',
+    borderClass: 'border-l-outline',
+    badgeClass: 'bg-surface-container-high text-outline border border-outline-variant/40',
+    icon: 'edit_note'
+  };
+}
+
 // Renderizar Línea de Tiempo Completa
 function renderTimeline(filterCategory = 'ALL') {
   const container = document.getElementById('full-timeline-container');
@@ -789,54 +1019,61 @@ function renderTimeline(filterCategory = 'ALL') {
     return;
   }
 
-  container.innerHTML = events.map(evt => `
-    <div class="flex items-start gap-space-md p-space-sm bg-surface-container rounded-lg border-l-4 ${getBorderColorClass(evt.category)} shadow-sm hover:bg-surface-container-high transition-colors">
-      <div class="flex flex-col items-center flex-shrink-0 w-20 text-center">
-        <span class="font-label-lg text-label-lg font-bold text-on-surface tabular-nums">${evt.codeTimeFormatted}</span>
-        <span class="font-label-sm text-label-sm text-outline tabular-nums">${evt.realTime}</span>
-      </div>
-      <div class="flex-1 flex flex-col">
-        <div class="flex items-center justify-between gap-space-xs">
-          <span class="font-label-sm text-label-sm font-bold uppercase tracking-wider ${evt.badgeColor}">${evt.category}</span>
-          <span class="font-label-sm text-label-sm text-outline">ID: ${evt.id.slice(-4)}</span>
+  container.innerHTML = events.map(evt => {
+    const theme = getActionVisualTheme(evt.category, evt.title);
+    return `
+      <div class="flex items-start gap-space-md p-space-sm rounded-lg border-l-4 ${theme.borderClass} ${theme.bgClass} border border-surface-container-high/60 shadow-sm transition-all w-full min-w-0 overflow-hidden">
+        <div class="flex flex-col items-center flex-shrink-0 w-16 text-center">
+          <span class="font-label-lg text-sm font-black ${theme.timeClass} tabular-nums">${evt.codeTimeFormatted}</span>
+          <span class="font-label-sm text-[11px] text-outline tabular-nums">${evt.realTime}</span>
         </div>
-        <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface uppercase mt-0.5">${evt.title}</h3>
-        <p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-snug">${evt.details}</p>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div class="flex items-center justify-between gap-space-xs">
+            <span class="font-label-sm text-xs px-2 py-0.5 rounded font-black uppercase tracking-wider ${theme.badgeClass} flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">${theme.icon}</span>
+              ${theme.categoryLabel}
+            </span>
+            <span class="font-label-sm text-xs text-outline tabular-nums">ID: ${evt.id.slice(-4)}</span>
+          </div>
+          <h3 class="font-headline-sm text-base uppercase mt-1 ${theme.titleClass} break-words">${evt.title}</h3>
+          <p class="font-body-md text-sm text-on-surface-variant mt-1 leading-snug break-words">${evt.details}</p>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-function getBorderColorClass(category) {
-  switch (category) {
-    case 'DESFIBRILACIÓN': return 'border-l-primary';
-    case 'FÁRMACO': return 'border-l-tertiary';
-    case 'CICLO/RITMO': return 'border-l-secondary';
-    case 'RESOLUCIÓN': return 'border-l-emerald-400';
-    default: return 'border-l-outline';
-  }
-}
-
-// Mini Feed en Vivo (Consola Principal)
+// Mini Feed en Vivo (Consola Principal) - Ajustado para CERO DESBORDAMIENTO y CÓDIGOS DE COLOR
 function renderLiveMiniFeed() {
   const container = document.getElementById('live-mini-feed');
   if (!container) return;
 
-  const recent = appState.events.slice(0, 5);
+  const recent = appState.events.slice(0, 6);
   if (recent.length === 0) {
     container.innerHTML = `<p class="font-body-sm text-body-sm text-outline py-space-sm text-center">Sin eventos registrados aún.</p>`;
     return;
   }
 
-  container.innerHTML = recent.map(evt => `
-    <div class="flex items-start gap-space-xs py-space-xs border-b border-surface-variant/40 last:border-b-0">
-      <span class="font-label-sm text-label-sm font-bold text-primary tabular-nums w-12 flex-shrink-0">${evt.codeTimeFormatted}</span>
-      <div class="flex flex-col flex-1 leading-tight">
-        <span class="font-label-sm text-label-sm font-bold text-on-surface uppercase truncate">${evt.title}</span>
-        <span class="font-body-sm text-body-sm text-on-surface-variant/80 truncate">${evt.details}</span>
+  container.innerHTML = recent.map(evt => {
+    const theme = getActionVisualTheme(evt.category, evt.title);
+    return `
+      <div class="flex items-start gap-2 p-2 rounded-lg border-l-4 ${theme.borderClass} ${theme.bgClass} border border-surface-container-highest/60 w-full min-w-0 overflow-hidden shadow-sm transition-colors">
+        <div class="flex flex-col items-center flex-shrink-0 w-12 text-center pt-0.5">
+          <span class="font-label-sm text-xs font-black ${theme.timeClass} tabular-nums leading-none">${evt.codeTimeFormatted}</span>
+          <span class="font-label-sm text-[10px] text-outline tabular-nums mt-1">${evt.realTime ? evt.realTime.slice(0, 5) : ''}</span>
+        </div>
+        <div class="flex flex-col flex-1 min-w-0 overflow-hidden leading-tight">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="material-symbols-outlined text-[14px] ${theme.colorClass} flex-shrink-0">${theme.icon}</span>
+            <span class="font-label-sm text-xs uppercase ${theme.titleClass} truncate flex-1">${evt.title}</span>
+          </div>
+          <p class="font-body-sm text-xs text-on-surface-variant/90 break-words mt-1 line-clamp-2 leading-relaxed">
+            ${evt.details}
+          </p>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // HUD de Respuesta Rápida al Líder (Pestaña Fármacos)
