@@ -1,0 +1,134 @@
+/* Estilos complementarios para Cronómetro Vital: Guía de Código Azul */
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+}
+
+/* Ocultar barra de scroll en contenedores fluidos */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Animaciones de Alertas Clínicas */
+@keyframes pulse-purple {
+  0%, 100% {
+    background-color: rgba(124, 58, 237, 0.95);
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
+    border-color: #c084fc;
+  }
+  50% {
+    background-color: rgba(88, 28, 135, 0.85);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+    border-color: #9333ea;
+  }
+}
+
+.alert-purple-cycle {
+  animation: pulse-purple 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-red-epi {
+  0%, 100% {
+    background-color: rgba(220, 38, 38, 0.95);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+    border-color: #fca5a5;
+  }
+  50% {
+    background-color: rgba(153, 27, 27, 0.85);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    border-color: #ef4444;
+  }
+}
+
+.alert-red-epi {
+  animation: pulse-red-epi 1.2s infinite ease-in-out;
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.radar-beacon {
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Transición suave de pestañas */
+.tab-content {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.tab-content.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* Estilos de Impresión / Exportación a PDF para Historia Clínica Electrónica */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  header, nav, #sound-toggle-btn, #pre-arrest-modal, .no-print, button:not(.print-include) {
+    display: none !important;
+  }
+
+  main {
+    padding-top: 0 !important;
+  }
+
+  .tab-content {
+    display: none !important;
+  }
+
+  #tab-resumen-entrega-turno {
+    display: block !important;
+    opacity: 1 !important;
+  }
+
+  .bg-surface, .bg-surface-container, .bg-surface-container-low, .bg-surface-container-lowest, .bg-surface-container-high {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+
+  .text-on-surface, .text-on-surface-variant, .text-outline, .text-primary, .text-secondary, .text-tertiary {
+    color: #000000 !important;
+  }
+
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-table th, .print-table td {
+    border: 1px solid #333333 !important;
+    padding: 6px 8px !important;
+    color: #000000 !important;
+  }
+}
