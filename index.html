@@ -226,9 +226,9 @@
             </div>
           </div>
 
-          <button onclick="resetCPRCycle()" class="w-full min-h-[58px] py-space-sm px-space-md bg-secondary hover:bg-secondary/90 text-surface font-headline-sm text-headline-sm uppercase font-bold rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-space-xs" id="btn-reset-cycle">
-            <span class="material-symbols-outlined text-[26px]">cached</span>
-            <span>REINICIAR CICLO (2 MIN)</span>
+          <button onclick="startPause10sWindow()" class="w-full min-h-[58px] py-space-sm px-space-md bg-secondary hover:bg-secondary/90 text-surface font-headline-sm text-headline-sm uppercase font-black rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-space-xs" id="btn-reset-cycle">
+            <span class="material-symbols-outlined text-[26px]">timer</span>
+            <span>PAUTA 10s • EVALUAR & RELEVO</span>
           </button>
         </div>
       </div>
@@ -242,13 +242,56 @@
               ¡2 MINUTOS CUMPLIDOS! EVALUAR RITMO
             </span>
             <span class="font-body-md text-body-md font-semibold text-purple-100" id="cycle-banner-sub">
-              Pausar compresiones &lt;10s • Evaluar Ritmo / Pulso • CAMBIO DE PERSONA EN MASAJE CARDÍACO
+              Pausar compresiones &lt;10s • 1) Comprobar ritmo, 2) Evaluar pulso, 3) Relevar masajista
             </span>
           </div>
         </div>
         <div class="flex items-center gap-space-xs flex-shrink-0">
-          <button onclick="openRhythmModal()" class="px-space-md py-space-xs bg-purple-200 hover:bg-white text-purple-950 rounded-lg font-label-md text-label-md uppercase font-black transition-transform active:scale-95 shadow">
-            CLASIFICAR RITMO & RELEVO
+          <button onclick="startPause10sWindow()" class="px-space-md py-space-xs bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg font-label-md text-label-md uppercase font-black transition-transform active:scale-95 shadow">
+            INICIAR PAUTA 10s & RELEVO
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER PACIENTE SALE DEL PARO (RCE / CRONÓMETRO DETENIDO) -->
+      <div id="rosc-alert-banner" class="hidden w-full rounded-xl p-space-md text-emerald-100 shadow-xl flex-col md:flex-row items-center justify-between gap-space-sm transition-all border-2 border-emerald-400 alert-green-rosc">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[36px] font-bold text-emerald-300 animate-bounce">favorite</span>
+          <div class="flex flex-col">
+            <span class="font-headline-md text-headline-md uppercase font-bold text-emerald-200">
+              ¡PACIENTE SALE DEL PARO! PULSO CONFIRMADO
+            </span>
+            <span class="font-body-md text-body-md font-semibold text-emerald-100">
+              Maniobras de reanimación suspendidas • Cronómetro general detenido a los <strong id="rosc-banner-time" class="tabular-nums underline font-bold">--:--</strong> min. Iniciar cuidados post-paro.
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button onclick="switchTab('resumen-entrega-turno')" class="px-space-md py-space-xs bg-white text-emerald-950 rounded-lg font-label-md text-label-md uppercase font-black transition-transform active:scale-95 shadow">
+            VER ACTA SBAR
+          </button>
+          <button onclick="resumeCodeFromROSC()" class="px-space-sm py-space-xs bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500 rounded-lg font-label-sm text-label-sm uppercase font-bold">
+            Reanudar Si Recae
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER PACIENTE FALLECIDO (CESE DEFINITIVO) -->
+      <div id="death-alert-banner" class="hidden w-full rounded-xl p-space-md text-zinc-100 shadow-xl flex-col md:flex-row items-center justify-between gap-space-sm transition-all border-2 border-rose-600 bg-zinc-950">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[36px] font-bold text-rose-500">person_off</span>
+          <div class="flex flex-col">
+            <span class="font-headline-md text-headline-md uppercase font-bold text-rose-400">
+              PACIENTE FALLECIDO • CESE DEFINITIVO DE MANIOBRAS
+            </span>
+            <span class="font-body-md text-body-md text-zinc-300">
+              Maniobras finalizadas por el médico líder. Hora de defunción: <strong id="death-banner-time" class="text-white font-bold">--:--</strong>. Acta de defunción disponible para historia clínica.
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button onclick="switchTab('resumen-entrega-turno')" class="px-space-md py-space-xs bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-label-md text-label-md uppercase font-black transition-transform active:scale-95 shadow">
+            VER ACTA FINAL
           </button>
         </div>
       </div>
@@ -427,17 +470,28 @@
             <div class="bg-surface-container-low rounded-xl p-space-md border border-surface-container-high flex flex-col justify-between">
               <div class="flex items-center justify-between">
                 <span class="font-label-md text-label-md uppercase text-outline font-bold">Resolución de Paro</span>
-                <span class="font-label-sm text-label-sm text-outline">Acción Final</span>
+                <span class="font-label-sm text-label-sm text-outline">Acción Definitiva</span>
               </div>
-              <div class="grid grid-cols-2 gap-space-sm my-space-xs">
-                <button onclick="recordResolution('ROSC')" class="py-space-sm px-space-md bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-600 rounded-lg font-headline-sm text-headline-sm uppercase font-bold transition-all text-center shadow-md">
-                  RCE / ROSC LOGRADO
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm my-space-xs">
+                <!-- Botón 1: Confirmar Pulso / Sale del Paro (Verde) -->
+                <button onclick="confirmPulseAndStopCode()" class="py-space-sm px-space-md bg-emerald-950 hover:bg-emerald-800 text-emerald-200 border-2 border-emerald-500 rounded-lg font-headline-sm text-headline-sm uppercase font-black transition-all text-center shadow-lg flex items-center justify-center gap-2 group">
+                  <span class="material-symbols-outlined text-[26px] text-emerald-400 group-hover:scale-110 transition-transform">favorite</span>
+                  <div class="flex flex-col text-left">
+                    <span class="leading-tight">CONFIRMAR PULSO</span>
+                    <span class="font-label-sm text-[10px] text-emerald-300 font-bold lowercase">paciente sale del paro</span>
+                  </div>
                 </button>
-                <button onclick="recordResolution('CESE')" class="py-space-sm px-space-md bg-surface-container hover:bg-red-950/80 text-outline hover:text-red-300 border border-surface-container-high rounded-lg font-headline-sm text-headline-sm uppercase font-bold transition-all text-center">
-                  DECLARAR CESE
+
+                <!-- Botón 2: Paciente Fallece / Cese (Negro/Rojo) -->
+                <button onclick="openDeathModal()" class="py-space-sm px-space-md bg-zinc-950 hover:bg-black text-rose-300 hover:text-rose-200 border-2 border-rose-600/80 rounded-lg font-headline-sm text-headline-sm uppercase font-black transition-all text-center shadow-lg flex items-center justify-center gap-2 group">
+                  <span class="material-symbols-outlined text-[26px] text-rose-500 group-hover:scale-110 transition-transform">person_off</span>
+                  <div class="flex flex-col text-left">
+                    <span class="leading-tight">PACIENTE FALLECE</span>
+                    <span class="font-label-sm text-[10px] text-rose-400 font-bold lowercase">cese de reanimación</span>
+                  </div>
                 </button>
               </div>
-              <span class="font-label-sm text-label-sm text-outline text-center">Habilitará automáticamente el acta de entrega SBAR</span>
+              <span class="font-label-sm text-label-sm text-outline text-center">Suspenden de inmediato maniobras o registran fallecimiento oficial</span>
             </div>
           </div>
 
@@ -1010,9 +1064,194 @@ Cargando datos del informe clínico...
         </button>
       </div>
 
-      <button onclick="setRhythm('RCE / Pulso Detectado', false)" class="p-space-sm bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-600 rounded-xl font-headline-sm text-headline-sm uppercase font-bold transition-all text-center">
-        PULSO CENTRAL DETECTADO (RCE)
+      <button onclick="setRhythm('RCE / Pulso Detectado', false)" class="p-space-sm bg-emerald-950 hover:bg-emerald-800 text-emerald-200 border-2 border-emerald-500 rounded-xl font-headline-sm text-headline-sm uppercase font-black transition-all text-center flex items-center justify-center gap-2 shadow-lg">
+        <span class="material-symbols-outlined text-[24px] text-emerald-400">favorite</span>
+        <span>¡PULSO CENTRAL DETECTADO! (PACIENTE SALE DEL PARO)</span>
       </button>
+
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- MODAL: PAUTA CLÍNICA DE 10 SEGUNDOS (RELEVO Y EVALUACIÓN) -->
+  <!-- (Requerimiento Clínico Hospitalario: Pauta 10s y 3 pasos) -->
+  <!-- ==================================================== -->
+  <div id="pause-10s-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-space-md">
+    <div class="bg-surface-container-low max-w-2xl w-full rounded-2xl p-space-lg border-4 border-amber-500 shadow-[0_0_50px_rgba(245,158,11,0.5)] flex flex-col gap-space-md alert-amber-10s">
+      
+      <!-- Encabezado con Cuenta Regresiva de 10s -->
+      <div class="flex items-center justify-between border-b border-amber-400/30 pb-space-xs">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-amber-300 text-[36px] animate-bounce">pan_tool</span>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-xs uppercase font-black text-amber-300 tracking-widest">PAUSA MÁXIMA &lt; 10 SEGUNDOS • ACLS</span>
+            <h2 class="font-headline-md text-2xl font-black uppercase text-amber-100">MANOS FUERA DEL PECHO</h2>
+          </div>
+        </div>
+        
+        <!-- Reloj de Cuenta Regresiva de 10 Segundos -->
+        <div class="flex flex-col items-end">
+          <div id="pause-10s-countdown" class="font-timer-hero text-5xl md:text-6xl font-black text-amber-300 tabular-nums leading-none">
+            10s
+          </div>
+          <span class="font-label-sm text-[10px] text-amber-200/80 uppercase font-bold mt-1">Tiempo Restante</span>
+        </div>
+      </div>
+
+      <!-- Barra de Progreso Dinámica 10s -->
+      <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-amber-500/50">
+        <div id="pause-10s-bar" class="bg-gradient-to-r from-amber-400 to-yellow-300 h-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
+      </div>
+
+      <!-- LOS 3 PASOS OBLIGATORIOS (AVISO GRANDE Y COLORIDO) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+        
+        <!-- Paso 1: Comprobar Ritmo -->
+        <div class="bg-amber-950/40 p-space-sm rounded-xl border-2 border-amber-400/80 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-label-sm text-xs font-black uppercase bg-amber-400 text-slate-950 px-2 py-0.5 rounded shadow">PASO 1</span>
+              <span class="material-symbols-outlined text-amber-300 text-[20px]">monitor_heart</span>
+            </div>
+            <h3 class="font-headline-sm text-base uppercase font-black text-amber-200 mt-2 leading-tight">COMPROBAR RITMO</h3>
+            <p class="font-body-sm text-xs text-amber-100/90 mt-1 leading-snug">Observar el monitor ECG: ¿Es desfibrilable (FV/TV) o asistolia/AESP?</p>
+          </div>
+        </div>
+
+        <!-- Paso 2: Evaluar Pulso -->
+        <div class="bg-emerald-950/40 p-space-sm rounded-xl border-2 border-emerald-400/80 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-label-sm text-xs font-black uppercase bg-emerald-400 text-slate-950 px-2 py-0.5 rounded shadow">PASO 2</span>
+              <span class="material-symbols-outlined text-emerald-300 text-[20px]">favorite</span>
+            </div>
+            <h3 class="font-headline-sm text-base uppercase font-black text-emerald-200 mt-2 leading-tight">EVALUAR PULSO</h3>
+            <p class="font-body-sm text-xs text-emerald-100/90 mt-1 leading-snug">Palpar carótida central (&lt;10s). Si tiene pulso: ¡El paciente sale del paro!</p>
+          </div>
+        </div>
+
+        <!-- Paso 3: Cambiar Reanimador -->
+        <div class="bg-purple-950/40 p-space-sm rounded-xl border-2 border-purple-400/80 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-label-sm text-xs font-black uppercase bg-purple-400 text-slate-950 px-2 py-0.5 rounded shadow">PASO 3</span>
+              <span class="material-symbols-outlined text-purple-300 text-[20px]">swap_horiz</span>
+            </div>
+            <h3 class="font-headline-sm text-base uppercase font-black text-purple-200 mt-2 leading-tight">CAMBIAR REANIMADOR</h3>
+            <p class="font-body-sm text-xs text-purple-100/90 mt-1 leading-snug">El relevo entra a la posición de compresión para evitar fatiga mecánica.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTONES DE DECISIÓN INMEDIATA -->
+      <div class="flex flex-col gap-space-xs mt-space-xs">
+        <!-- 1. SI TIENE PULSO -> SALE DEL PARO Y PARA EL CRONOMETRO -->
+        <button onclick="confirmPulseAndStopCode()" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-headline-sm text-lg uppercase font-black rounded-xl shadow-xl transition-transform active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-emerald-300">
+          <span class="material-symbols-outlined text-[26px]">favorite</span>
+          <span>¡CONFIRMAR PULSO CENTRAL! (PACIENTE SALE DEL PARO)</span>
+        </button>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+          <!-- 2. RITMO DESFIBRILABLE -> JOULES -->
+          <button onclick="closePause10sModal(); openDefibModal();" class="py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white font-label-md text-sm uppercase font-black rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-1.5 shadow">
+            <span class="material-symbols-outlined text-[20px]">bolt</span>
+            <span>RITMO DESFIBRILABLE (FV/TV)</span>
+          </button>
+
+          <!-- 3. NO DESFIBRILABLE / RELEVO LISTO -> INICIAR NUEVO CICLO -->
+          <button onclick="finishPauseAndStartNewCycle()" class="py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-label-md text-sm uppercase font-black rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-1.5 shadow">
+            <span class="material-symbols-outlined text-[20px]">play_arrow</span>
+            <span>REANUDAR MASAJE (NUEVO CICLO)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- MODAL: PACIENTE SALE DEL PARO (RCE / MANIOBRAS DETENIDAS) -->
+  <!-- ==================================================== -->
+  <div id="rosc-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-space-md">
+    <div class="bg-surface-container-low max-w-xl w-full rounded-2xl p-space-lg border-4 border-emerald-500 shadow-[0_0_60px_rgba(34,197,94,0.6)] flex flex-col gap-space-md animate-fade-in alert-green-rosc">
+      
+      <div class="flex items-center gap-space-sm border-b border-emerald-400/40 pb-space-sm">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg flex-shrink-0 animate-bounce">
+          <span class="material-symbols-outlined text-[36px]">favorite</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-label-sm text-xs font-black uppercase text-emerald-300 tracking-widest">R.C.E. LOGRADO • CRONÓMETRO DETENIDO</span>
+          <h2 class="font-headline-lg text-2xl font-black uppercase text-white">¡PACIENTE SALE DEL PARO!</h2>
+        </div>
+      </div>
+
+      <div class="bg-black/40 p-space-md rounded-xl border border-emerald-500/40 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="font-label-md text-sm text-emerald-200 uppercase font-bold">Tiempo Total de Reanimación:</span>
+          <span id="rosc-modal-time" class="font-timer-hero text-2xl font-black text-emerald-300 tabular-nums">00:00</span>
+        </div>
+        <p class="font-body-md text-sm text-emerald-100">
+          Se ha confirmado la presencia de pulso carotídeo central. Las compresiones torácicas y los cronómetros de ciclo se han <strong>suspendido automáticamente</strong> para no interferir con la circulación espontánea del paciente.
+        </p>
+      </div>
+
+      <!-- Cuidados Post-Paro Recomendados -->
+      <div class="bg-surface-container p-space-sm rounded-lg border border-surface-container-high text-xs text-on-surface-variant flex flex-col gap-1">
+        <span class="font-label-sm text-[11px] font-black uppercase text-emerald-400">Cuidados Post-Paro Inmediatos (AHA ACLS):</span>
+        <span>• Mantener vía aérea asegurada y ventilar a 10 rpm (SatO2 92-98%).</span>
+        <span>• Mantener PAM &gt;65 mmHg y PAS &gt;90 mmHg (usar noradrenalina si hipotenso).</span>
+        <span>• Tomar ECG de 12 derivaciones (buscar IAM con elevación del ST).</span>
+        <span>• Manejo de temperatura y coordinar transferencia inmediata a UCI.</span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center gap-space-xs mt-space-xs">
+        <button onclick="switchTab('resumen-entrega-turno'); document.getElementById('rosc-modal').classList.add('hidden');" class="flex-1 w-full py-3 px-4 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-headline-sm text-base uppercase font-black rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-[22px]">assignment</span>
+          <span>VER ACTA DE ENTREGA (SBAR)</span>
+        </button>
+        <button onclick="resumeCodeFromROSC()" class="w-full sm:w-auto py-3 px-4 bg-surface-container hover:bg-surface-container-high text-rose-300 hover:text-rose-200 border border-surface-container-highest rounded-xl font-label-md text-sm uppercase font-bold transition-colors">
+          Reanudar (Si Recae a Paro)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- MODAL: DECLARACIÓN DE FALLECIMIENTO (PACIENTE FALLECE) -->
+  <!-- ==================================================== -->
+  <div id="death-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-space-md">
+    <div class="bg-zinc-950 max-w-lg w-full rounded-2xl p-space-lg border-2 border-rose-600 shadow-[0_0_50px_rgba(225,29,72,0.4)] flex flex-col gap-space-md animate-fade-in">
+      
+      <div class="flex items-center gap-space-sm border-b border-rose-900/60 pb-space-sm">
+        <div class="w-12 h-12 rounded-xl bg-rose-950 text-rose-400 flex items-center justify-center border border-rose-700 shadow-md flex-shrink-0">
+          <span class="material-symbols-outlined text-[30px]">person_off</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-label-sm text-xs font-black uppercase text-rose-400 tracking-wider">CESE DEFINITIVO DE MANIOBRAS</span>
+          <h2 class="font-headline-md text-xl font-bold uppercase text-white">Declarar Fallecimiento del Paciente</h2>
+        </div>
+      </div>
+
+      <p class="font-body-md text-sm text-zinc-300">
+        ¿Confirma que el médico líder de la reanimación declara el <strong>cese formal y definitivo</strong> de las maniobras por asistolia refractaria y tiempo prolongado?
+      </p>
+
+      <div class="bg-zinc-900 p-space-sm rounded-lg border border-zinc-800 text-xs text-zinc-400 flex flex-col gap-1">
+        <div>Duración total del esfuerzo de RCP: <strong id="death-modal-duration" class="text-white font-bold tabular-nums">00:00</strong></div>
+        <div>Al confirmar se registrará la hora oficial de defunción y se generará el acta legal para la historia clínica electrónica.</div>
+      </div>
+
+      <div class="flex flex-col gap-space-xs mt-space-xs">
+        <button onclick="confirmDeath()" class="w-full py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-headline-sm text-base uppercase font-black rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[22px]">stop_circle</span>
+          <span>SÍ, CONFIRMAR FALLECIMIENTO (DETENER CRONÓMETRO)</span>
+        </button>
+        <button onclick="closeDeathModal()" class="w-full py-2.5 px-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-xl font-label-md text-sm uppercase font-semibold transition-colors">
+          Cancelar y Continuar Reanimación
+        </button>
+      </div>
 
     </div>
   </div>

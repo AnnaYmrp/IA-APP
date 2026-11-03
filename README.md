@@ -27,16 +27,27 @@ Basado en las pruebas de campo y los reportes de fallo de versiones anteriores, 
    - Acceso ultrarrápido a **Amiodarona** (300 mg / 150 mg), **Lidocaína** (100 mg / 50 mg), **Sulfato de Magnesio** (1-2 g), **Bicarbonato de Sodio** (50 mEq), **Gluconato de Calcio** (1-2 g) y **Dextrosa 50%**.
    - Campo para ingresar la dosis personalizada indicada por el médico líder con registro al segundo.
 
-5. **Alarma Visual Morada de 2 Minutos (Ciclo RCP & Relevo de Masajista)**:
-   - Cuenta regresiva precisa de 120 segundos con anillo de progreso visual.
-   - Al cumplirse los 2 minutos, activa la **Alerta Morada** (`#7C3AED` / `#A855F7`) ordenando la pausa <10s, evaluación de ritmo y cambio obligatorio de operador de masaje cardíaco para evitar la fatiga y caída en la fracción de compresiones.
+5. **Alarma Visual Morada de 2 Minutos & Pauta de 10 Segundos (Relevo y Evaluación)**:
+   - Al completarse los 2 minutos de masaje, se activa automáticamente la **Pauta de 10 Segundos** con cuenta regresiva visual y auditiva (`10s` -> `0s`).
+   - Muestra de forma destacada en tarjetas gigantes los 3 pasos obligatorios:
+     1. 🟡 **1. Comprobar Ritmo Cardíaco**: Observar monitor ECG (¿FV/TV o Asistolia/AESP?).
+     2. 🟢 **2. Evaluar Pulso Central**: Palpar carótida (<10s).
+     3. 🟣 **3. Cambiar Reanimador**: El nuevo operador toma posición para evitar fatiga muscular.
 
-6. **Sistema de Audio Fail-Safe (Web Audio API Sintetizado)**:
+6. **Suspensión Automática al Confirmar Pulso (Paciente Sale del Paro / RCE)**:
+   - Al confirmar pulso central palpable, la aplicación **detiene automáticamente todos los cronómetros** y suspende las alertas de compresiones torácicas para no interferir con la circulación espontánea del paciente.
+   - Activa el protocolo de cuidados post-paro (AHA ACLS) y permite exportar de inmediato el acta de reanimación.
+
+7. **Botón de Declaración de Fallecimiento ("Paciente Fallece")**:
+   - Opción explícita solicitada por el personal de enfermería para declarar el cese definitivo de maniobras con confirmación de seguridad.
+   - Detiene los cronómetros, asienta la hora legal de defunción y compila la bitácora cronológica completa para el informe médico legal.
+
+8. **Sistema de Audio Fail-Safe (Web Audio API Sintetizado)**:
    - Cero dependencias de archivos de sonido externos (.mp3/.wav) que causan errores 404 o bloqueos por políticas de autoplay de navegadores.
    - Los tonos se sintetizan en tiempo real mediante la `AudioContext` nativa del navegador.
    - Interruptor accesible en cabecera: **🔔 Sonido Activado** / **🔕 Modo Silencioso (100% Visual)** para evitar contaminación auditiva con monitores de signos vitales.
 
-7. **Línea de Tiempo Cronológica y Reporte SBAR Exportable**:
+9. **Línea de Tiempo Cronológica y Reporte SBAR Exportable**:
    - Bitácora completa minuto a minuto con hora de reloj y tiempo de paro.
    - Resumen estructurado SBAR (*Situation, Background, Assessment, Recommendation*).
    - Botón de **"Copiar al Portapapeles EHR"** para pegar directo en historias clínicas electrónicas.

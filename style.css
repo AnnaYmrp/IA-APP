@@ -54,6 +54,40 @@
   animation: pulse-red-epi 1.2s infinite ease-in-out;
 }
 
+@keyframes pulse-amber-10s {
+  0%, 100% {
+    background-color: rgba(180, 83, 9, 0.95);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.85);
+    border-color: #fde68a;
+  }
+  50% {
+    background-color: rgba(120, 53, 15, 0.85);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    border-color: #f59e0b;
+  }
+}
+
+.alert-amber-10s {
+  animation: pulse-amber-10s 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-green-rosc {
+  0%, 100% {
+    background-color: rgba(6, 78, 59, 0.95);
+    box-shadow: 0 0 35px rgba(34, 197, 94, 0.85);
+    border-color: #86efac;
+  }
+  50% {
+    background-color: rgba(2, 44, 34, 0.9);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+    border-color: #22c55e;
+  }
+}
+
+.alert-green-rosc {
+  animation: pulse-green-rosc 1.5s infinite ease-in-out;
+}
+
 @keyframes radar-ping {
   0% {
     transform: scale(0.95);

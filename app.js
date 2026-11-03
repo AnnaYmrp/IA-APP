@@ -120,6 +120,53 @@ class ClinicalAudioSystem {
       console.warn('Audio Shock error:', e);
     }
   }
+
+  // Beep corto de aviso para cuenta regresiva de 10s (segundos 3, 2, 1)
+  playCountdownBeep() {
+    if (!this.soundEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(750, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } catch (e) {
+      console.warn('Audio countdown beep error:', e);
+    }
+  }
+
+  // Acorde armónico de éxito cuando el paciente tiene pulso y sale del paro
+  playSuccessChime() {
+    if (!this.soundEnabled || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      [
+        { freq: 523.25, time: now, dur: 0.25 },        // C5
+        { freq: 659.25, time: now + 0.18, dur: 0.25 }, // E5
+        { freq: 783.99, time: now + 0.36, dur: 0.35 }, // G5
+        { freq: 1046.50, time: now + 0.55, dur: 0.7 }  // C6
+      ].forEach(tone => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(tone.freq, tone.time);
+        gain.gain.setValueAtTime(0.2, tone.time);
+        gain.gain.exponentialRampToValueAtTime(0.001, tone.time + tone.dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(tone.time);
+        osc.stop(tone.time + tone.dur);
+      });
+    } catch (e) {
+      console.warn('Audio success chime error:', e);
+    }
+  }
 }
 
 const audio = new ClinicalAudioSystem();
@@ -268,6 +315,7 @@ function tick() {
     if (!appState.hasAlertedCycle2Min) {
       appState.hasAlertedCycle2Min = true;
       audio.play2MinChime();
+      startPause10sWindow(); // Pauta de 10 segundos para evaluar y relevar
     }
   }
 
@@ -481,23 +529,88 @@ function confirmAndStartCode() {
   saveState();
 }
 
-// Reiniciar Ciclo de RCP (2 Minutos)
-function resetCPRCycle(evaluatedRhythm = null) {
-  audio.playClick();
+// ==========================================
+// PAUTA DE 10 SEGUNDOS (RELEVO Y EVALUACIÓN ACLS)
+// ==========================================
+let pause10sInterval = null;
+let pause10sRemaining = 10;
+let pause10sActive = false;
+
+function startPause10sWindow() {
+  if (pause10sActive) return;
+  audio.init();
+  audio.play2MinChime();
+  pause10sActive = true;
+  pause10sRemaining = 10;
+
+  const modal = document.getElementById('pause-10s-modal');
+  if (modal) modal.classList.remove('hidden');
+
+  updatePause10sUI();
+
+  if (pause10sInterval) clearInterval(pause10sInterval);
+  pause10sInterval = setInterval(() => {
+    pause10sRemaining--;
+    if (pause10sRemaining <= 3 && pause10sRemaining > 0) {
+      audio.playCountdownBeep();
+    }
+    updatePause10sUI();
+    if (pause10sRemaining <= 0) {
+      clearInterval(pause10sInterval);
+      audio.playShockBeep();
+    }
+  }, 1000);
+}
+
+function updatePause10sUI() {
+  const countEl = document.getElementById('pause-10s-countdown');
+  const barEl = document.getElementById('pause-10s-bar');
+  if (countEl) {
+    if (pause10sRemaining > 0) {
+      countEl.textContent = `${pause10sRemaining}s`;
+    } else {
+      countEl.innerHTML = `<span class="text-rose-400 font-black animate-pulse">¡0s! REANUDAR</span>`;
+    }
+  }
+  if (barEl) {
+    const pct = Math.max(0, (pause10sRemaining / 10) * 100);
+    barEl.style.width = `${pct}%`;
+  }
+}
+
+function closePause10sModal() {
+  if (pause10sInterval) clearInterval(pause10sInterval);
+  pause10sActive = false;
+  const modal = document.getElementById('pause-10s-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function finishPauseAndStartNewCycle(rhythmName = null) {
+  closePause10sModal();
   appState.cyclesCount++;
   appState.cycleElapsedSeconds = 0;
   appState.hasAlertedCycle2Min = false;
 
-  const rhythmText = evaluatedRhythm || appState.lastRhythm || 'No especificado';
+  const rhythmText = rhythmName || appState.lastRhythm || 'No especificado';
   logEvent(
     'CICLO/RITMO',
-    `FIN CICLO ${appState.cyclesCount - 1} • RELEVO DE MASAJISTA`,
-    `Ritmo evaluado: ${rhythmText}. Se reanudan compresiones torácicas inmediatamente con relevo de operador.`,
-    'text-secondary'
+    `INICIO CICLO #${appState.cyclesCount} • RELEVO REALIZADO`,
+    `Pauta de 10s completada: 1) Ritmo verificado (${rhythmText}), 2) Pulso evaluado (ausente), 3) Relevo de operador de compresiones efectuado. Reanudación inmediata de masaje torácico.`,
+    'text-amber-400'
   );
 
   updateTimersUI();
   saveState();
+}
+
+// Reiniciar Ciclo de RCP (2 Minutos)
+function resetCPRCycle(evaluatedRhythm = null, skipPause = false) {
+  audio.playClick();
+  if (!skipPause) {
+    startPause10sWindow();
+    return;
+  }
+  finishPauseAndStartNewCycle(evaluatedRhythm);
 }
 
 // Módulo de Adrenalina: Aplicación de 1 mg IV/IO
@@ -693,66 +806,148 @@ function setRhythm(rhythmName, isShockable) {
   audio.playClick();
   appState.lastRhythm = rhythmName;
   closeRhythmModal();
+  closePause10sModal();
+
+  if (rhythmName.includes('Pulso') || rhythmName.includes('RCE')) {
+    confirmPulseAndStopCode();
+    return;
+  }
 
   logEvent(
     'CICLO/RITMO',
     `RITMO EVALUADO: ${rhythmName.toUpperCase()}`,
     isShockable
-      ? 'Ritmo desfibrilable detectado. ¡Preparar desfibrilador, despejar área y administrar choque!'
-      : 'Ritmo no desfibrilable. Reanudar compresiones inmediatamente, considerar adrenalina temprana y buscar 5H/5T.',
+      ? 'Ritmo desfibrilable detectado (FV/TVSP). ¡Preparar desfibrilador, despejar área y administrar choque!'
+      : 'Ritmo no desfibrilable (Asistolia/AESP). Reanudar compresiones inmediatamente, considerar adrenalina temprana y buscar 5H/5T.',
     isShockable ? 'text-primary' : 'text-outline'
   );
 
-  // Reiniciar ciclo de 2 min
-  resetCPRCycle(rhythmName);
+  if (isShockable) {
+    openDefibModal();
+  } else {
+    // Reanudar inmediatamente siguiente ciclo con nuevo masajista
+    finishPauseAndStartNewCycle(rhythmName);
+  }
 }
 
-// Manejo de Vía Aérea
-function recordAirway(type) {
-  audio.playClick();
-  appState.airwayStatus = type;
-  logEvent(
-    'VÍA AÉREA',
-    `VÍA AÉREA: ${type.toUpperCase()}`,
-    'Dispositivo instalado con éxito. Se verifica capnografía cuantitativa y excursión torácica bilateral.',
-    'text-outline'
-  );
-  saveState();
-}
+// ==========================================
+// PACIENTE SALE DEL PARO (CONFIRMAR PULSO)
+// ==========================================
+function confirmPulseAndStopCode() {
+  audio.init();
+  audio.playSuccessChime();
+  closePause10sModal();
+  closeRhythmModal();
 
-// Acceso Vascular
-function recordVascular(type) {
-  audio.playClick();
-  appState.vascularAccess = type;
-  logEvent(
-    'ACCESO',
-    `ACCESO LOGRADO: ${type.toUpperCase()}`,
-    'Acceso permeable y comprobado para administración de volumen y vasopresores.',
-    'text-outline'
-  );
-  saveState();
-}
-
-// Cierre de Código: ROSC (RCE) o Cese
-function recordResolution(type) {
-  audio.playClick();
-  const isROSC = type === 'ROSC';
-  appState.outcome = isROSC ? 'RCE (Retorno de Circulación Espontánea) Obtenido' : 'Cese de Maniobras Declarado';
-  appState.outcomeTime = getWallClockTimeString();
   appState.isPaused = true;
+  appState.outcome = 'RCE (Retorno de Circulación Espontánea) - Paciente Sale del Paro (Pulso Confirmado)';
+  appState.outcomeTime = getWallClockTimeString();
 
   logEvent(
     'RESOLUCIÓN',
-    isROSC ? '¡R.C.E. LOGRADO (RETORNO CIRCULACIÓN)!' : 'DECLARACIÓN FORMAL DE CESE DE MANIOBRAS',
-    isROSC
-      ? 'Presencia de pulso carotídeo central y elevación de ETCO2. Se inician cuidados post-paro cardíaco (hipotermia guiada, hemodinamia, traslado a UCI).'
-      : 'Líder del equipo médico declara finalización de esfuerzos de reanimación por asistolia refractaria y tiempo prolongado.',
-    isROSC ? 'text-emerald-400' : 'text-error'
+    '✅ PACIENTE SALE DEL PARO (PULSO CONFIRMADO)',
+    'Presencia de pulso carotídeo central confirmada tras evaluación. Se suspenden de inmediato las maniobras de RCP y se detiene automáticamente el cronómetro general. Iniciar protocolo de cuidados post-paro.',
+    'text-emerald-400'
   );
 
-  // Cambiar a la pestaña de reporte SBAR automáticamente
+  // Actualizar banner en consola principal
+  const bannerRosc = document.getElementById('rosc-alert-banner');
+  if (bannerRosc) {
+    bannerRosc.classList.remove('hidden');
+    bannerRosc.classList.add('flex');
+    const timeEl = document.getElementById('rosc-banner-time');
+    if (timeEl) timeEl.textContent = formatMMSS(appState.elapsedSeconds);
+  }
+
+  // Modal de notificación de pulso confirmado
+  const roscModal = document.getElementById('rosc-modal');
+  if (roscModal) {
+    const timeLabel = document.getElementById('rosc-modal-time');
+    if (timeLabel) timeLabel.textContent = formatMMSS(appState.elapsedSeconds);
+    roscModal.classList.remove('hidden');
+  }
+
+  updateTimersUI();
+  saveState();
+}
+
+function resumeCodeFromROSC() {
+  audio.playClick();
+  const roscModal = document.getElementById('rosc-modal');
+  if (roscModal) roscModal.classList.add('hidden');
+  const bannerRosc = document.getElementById('rosc-alert-banner');
+  if (bannerRosc) bannerRosc.classList.add('hidden');
+
+  appState.isPaused = false;
+  appState.outcome = 'En reanimación activa (Reingreso a Paro Cardíaco)';
+
+  logEvent(
+    'CÓDIGO AZUL',
+    'REANUDACIÓN DE MANIOBRAS (REINGRESO A PARO)',
+    'Pérdida de pulso central post-RCE. Se reanudan compresiones torácicas inmediatamente y se reactiva el cronómetro maestro.',
+    'text-primary'
+  );
+
+  startTimerLoop();
+  updateTimersUI();
+  saveState();
+}
+
+// ==========================================
+// PACIENTE FALLECE (DECLARACIÓN DE CESE)
+// ==========================================
+function openDeathModal() {
+  audio.playClick();
+  const modal = document.getElementById('death-modal');
+  if (modal) {
+    const timeEl = document.getElementById('death-modal-duration');
+    if (timeEl) timeEl.textContent = formatMMSS(appState.elapsedSeconds);
+    modal.classList.remove('hidden');
+  }
+}
+
+function closeDeathModal() {
+  const modal = document.getElementById('death-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function confirmDeath() {
+  audio.playClick();
+  closeDeathModal();
+  closePause10sModal();
+  closeRhythmModal();
+
+  appState.isPaused = true;
+  appState.outcome = 'Paciente Fallece - Cese Definitivo de Maniobras Declarado';
+  appState.outcomeTime = getWallClockTimeString();
+
+  logEvent(
+    'RESOLUCIÓN',
+    'PACIENTE FALLECE • CESE DEFINITIVO DE REANIMACIÓN',
+    'El médico líder declara formalmente el fallecimiento del paciente tras agotar maniobras de RCP avanzada sin respuesta. Hora legal de defunción: ' + appState.outcomeTime,
+    'text-rose-400'
+  );
+
+  const bannerDeath = document.getElementById('death-alert-banner');
+  if (bannerDeath) {
+    bannerDeath.classList.remove('hidden');
+    bannerDeath.classList.add('flex');
+    const timeEl = document.getElementById('death-banner-time');
+    if (timeEl) timeEl.textContent = appState.outcomeTime;
+  }
+
+  updateTimersUI();
   switchTab('resumen-entrega-turno');
   saveState();
+}
+
+// Cierre de Código genérico (compatibilidad)
+function recordResolution(type) {
+  if (type === 'ROSC') {
+    confirmPulseAndStopCode();
+  } else {
+    openDeathModal();
+  }
 }
 
 // Ajuste retroactivo de tiempo (+1 min) si el código arrancó tarde
